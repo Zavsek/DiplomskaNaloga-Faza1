@@ -1,0 +1,50 @@
+name: SonarQube analiza
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonar:
+    name: Build in Analiza
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Nastavitev Jave (Sonar potrebuje Javo)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Nastavitev .NET okolja
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0' 
+
+      - name: Namestitev Sonar skenerja
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+
+      - name: Zaženitve analize in gradnja (Sendvič struktura)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. ZAČETEK: Nastavitev parametrov
+          dotnet sonarscanner begin \
+            /k:"moj_csharp_monorepo" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+
+          # 2. SREDINA: Kompiliranje vseh 9 projektov (če imaš .sln datoteko v korenu)
+          dotnet build
+
+          # 3. KONEC: Zaključek in pošiljanje podatkov na SonarQube
+          dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
