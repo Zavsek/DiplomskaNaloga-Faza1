@@ -48,9 +48,14 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
+          # 1. ZAČETEK: Aktivacija skenerja
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"Zavsek_DiplomskaNaloga-Faza1" /o:"zavsek" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
           
-          # Tukaj se bo zgradilo vseh 9 projektov hkrati preko skupne .sln datoteke
-          dotnet build
+          # 2. SREDINA: Avtomatsko iskanje in gradnja vseh 9 .slnx projektov
+          Get-ChildItem -Recurse -Filter *.slnx | ForEach-Object {
+              Write-Host "--> Gradim projekt: $($_.Name) v mapi $($_.DirectoryName)"
+              dotnet build $_.FullName
+          }
           
+          # 3. KONEC: Zaključek analize in pošiljanje na SonarCloud
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
