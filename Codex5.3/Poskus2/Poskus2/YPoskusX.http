@@ -1,0 +1,6 @@
+@YPoskusX_HostAddress = http://localhost:5228
+
+GET {{YPoskusX_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,10 @@
+**/node_modules/
+**/dist/
+**/.vs/
+**/bin/
+**/obj/
+appsetting.json
+Setup/
+.env
+.git/
+Migrations/

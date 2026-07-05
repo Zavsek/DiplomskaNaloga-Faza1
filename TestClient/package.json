@@ -1,0 +1,33 @@
+{
+  "name": "TestClient",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+  "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.1.1",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.18.0",
+    "sqlite3": "^6.0.1",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/sqlite3": "^5.1.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
