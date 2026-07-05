@@ -37,13 +37,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. ZAČETEK: Nastavitev parametrov
+          # 1. ZAČETEK: Nastavitev parametrov (Brez odvečne poševnice na koncu!)
           dotnet sonarscanner begin \
             /k:"moj_csharp_monorepo" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /o:"TVOJA_ORGANIZACIJA_NA_SONARCLOUDU" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-          # 2. SREDINA: Kompiliranje vseh 9 projektov (če imaš .sln datoteko v korenu)
+          # 2. SREDINA: Kompiliranje vseh 9 projektov
           dotnet build
 
-          # 3. KONEC: Zaključek in pošiljanje podatkov na SonarQube
+          # 3. KONEC: Zaključek in pošiljanje podatkov
           dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
