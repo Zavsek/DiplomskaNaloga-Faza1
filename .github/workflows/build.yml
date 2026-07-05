@@ -41,7 +41,6 @@ jobs:
           dotnet sonarscanner begin \
             /k:"moj_csharp_monorepo" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
 
           # 2. SREDINA: Kompiliranje vseh 9 projektov (če imaš .sln datoteko v korenu)
           dotnet build
