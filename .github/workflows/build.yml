@@ -104,6 +104,5 @@ jobs:
                   }
               }
           }
-
           # 3. KONEC: Pošiljanje podatkov na SonarCloud
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
