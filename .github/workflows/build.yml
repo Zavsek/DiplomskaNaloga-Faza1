@@ -1,68 +1,58 @@
-name: SonarQube
+name: SonarQube analiza po poskusih
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
+on: [push, workflow_dispatch]
 
 jobs:
-  build:
-    name: Build and analyze
-    runs-on: windows-latest
-
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        folder:
+          - Codex5.3/Poskus1
+          - Codex5.3/Poskus2
+          - Codex5.3/Poskus3
+          - Gemini3.1/Poskus1
+          - Gemini3.1/Poskus2
+          - Gemini3.1/Poskus3
+          - Sonnet4.6/Poskus1
+          - Sonnet4.6/Poskus2
+          - Sonnet4.6/Poskus3
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: zulu
+      - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '9.0.x'
 
-      - name: Install Sonar scanner
-        shell: powershell
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install sonarscanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Nastavi project key
+        id: vars
         run: |
-          $scannerDir = "$env:RUNNER_TEMP\scanner"
-          New-Item -ItemType Directory -Force -Path $scannerDir | Out-Null
-          dotnet tool update dotnet-sonarscanner --tool-path $scannerDir
+          KEY=$(echo "${{ matrix.folder }}" | tr '/' '-' | tr '.' '-')
+          echo "key=llm-compare-$KEY" >> $GITHUB_OUTPUT
 
-      - name: Begin Sonar
-        shell: powershell
-        run: |
-          $scanner = "$env:RUNNER_TEMP\scanner\dotnet-sonarscanner"
-
-          & $scanner begin `
-            /k:"Zavsek_DiplomskaNaloga-Faza1" `
-            /o:"zavsek" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Sonar begin
+        working-directory: ${{ matrix.folder }}
+        run: >
+          dotnet sonarscanner begin
+          /k:"${{ steps.vars.outputs.key }}"
+          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Build
-        shell: powershell
-        run: |
-          $mape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
+        working-directory: ${{ matrix.folder }}
+        run: dotnet build *.slnx
 
-          foreach ($m in $mape) {
-
-            Write-Host "==== BUILD $m ===="
-
-            # BUILD CELE MAPE NAENKRAT (ne .slnx loop!)
-            dotnet build $m --configuration Release
-          } 
-
-      - name: End Sonar
-        shell: powershell
-        run: |
-          $scanner = "$env:RUNNER_TEMP\scanner\dotnet-sonarscanner"
-
-          & $scanner end `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Sonar end
+        working-directory: ${{ matrix.folder }}
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
