@@ -37,11 +37,13 @@ jobs:
       - name: Begin Sonar
         shell: powershell
         run: |
-          $env:RUNNER_TEMP\scanner\dotnet-sonarscanner begin `
+          $scanner = "$env:RUNNER_TEMP\scanner\dotnet-sonarscanner"
+
+          & $scanner begin `
             /k:"Zavsek_DiplomskaNaloga-Faza1" `
             /o:"zavsek" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
+            
       - name: Build all experiments
         shell: powershell
         run: |
