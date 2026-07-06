@@ -13,12 +13,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: 17
@@ -29,36 +29,41 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Cache Sonar scanner
-        id: cache-sonar
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}\sonar-scanner
-          key: sonar-scanner-${{ runner.os }}
-
       - name: Install Sonar scanner
-        if: steps.cache-sonar.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          New-Item -ItemType Directory -Path "${{ runner.temp }}\sonar-scanner" -Force
-          dotnet tool update dotnet-sonarscanner --tool-path "${{ runner.temp }}\sonar-scanner"
+          dotnet tool update dotnet-sonarscanner --tool-path $env:RUNNER_TEMP\scanner
 
-      - name: Begin Sonar analysis
+      - name: Begin Sonar
         shell: powershell
         run: |
-          ${{ runner.temp }}\sonar-scanner\dotnet-sonarscanner begin `
+          $env:RUNNER_TEMP\scanner\dotnet-sonarscanner begin `
             /k:"Zavsek_DiplomskaNaloga-Faza1" `
             /o:"zavsek" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Build solution
+      - name: Build all experiments
         shell: powershell
         run: |
-          # BUILD CELEGA REPOJA NAENKRAT
-          dotnet build --configuration Release
+          $mape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
 
-      - name: End Sonar analysis
+          foreach ($m in $mape) {
+
+            Write-Host "====================================="
+            Write-Host "Buildam mapo: $m"
+            Write-Host "====================================="
+
+            Get-ChildItem -Path $m -Recurse -Filter *.slnx |
+              Where-Object { $_.FullName -notmatch "\\Template\\" } |
+              ForEach-Object {
+
+                Write-Host "Build: $($_.FullName)"
+                dotnet build $_.FullName --configuration Release
+              }
+          }
+
+      - name: End Sonar
         shell: powershell
         run: |
-          ${{ runner.temp }}\sonar-scanner\dotnet-sonarscanner end `
+          $env:RUNNER_TEMP\scanner\dotnet-sonarscanner end `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
