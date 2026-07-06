@@ -50,34 +50,48 @@ jobs:
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
+      - name: Dodaj unikatne ProjectGuid v .csproj datoteke
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Dodajam unikatne ProjectGuid-e..."
+          Write-Host "=========================================="
+
+          $csprojDatoteke = Get-ChildItem -Path . -Recurse -Filter *.csproj -File |
+              Where-Object { $_.FullName -notmatch "\\Template\\" }
+
+          foreach ($datoteka in $csprojDatoteke) {
+              [xml]$xml = Get-Content $datoteka.FullName -Raw
+              $novGuid = "{" + [guid]::NewGuid().ToString().ToUpper() + "}"
+
+              # odstrani obstoječi ProjectGuid, če po naključju obstaja
+              $obstojeci = $xml.Project.PropertyGroup | Where-Object { $_.ProjectGuid }
+              if ($obstojeci) {
+                  foreach ($pg in $obstojeci) {
+                      $pg.RemoveChild($pg.ProjectGuid) | Out-Null
+                  }
+              }
+
+              # dodaj nov ProjectGuid v prvo PropertyGroup
+              $prviPropertyGroup = $xml.Project.PropertyGroup | Select-Object -First 1
+              if (-not $prviPropertyGroup) {
+                  $prviPropertyGroup = $xml.CreateElement("PropertyGroup")
+                  $xml.Project.AppendChild($prviPropertyGroup) | Out-Null
+              }
+
+              $guidElement = $xml.CreateElement("ProjectGuid")
+              $guidElement.InnerText = $novGuid
+              $prviPropertyGroup.AppendChild($guidElement) | Out-Null
+
+              $xml.Save($datoteka.FullName)
+              Write-Host "Dodan ProjectGuid $novGuid v: $($datoteka.FullName)"
+          }
+
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          # 0. Regeneracija GUID-jev, da se izognemo "Duplicate ProjectGuid"
-          Write-Host "=========================================="
-          Write-Host "Regeneriram GUID-e v kopiranih projektih..."
-          Write-Host "=========================================="
-
-          $datoteke = Get-ChildItem -Path . -Recurse -Include *.slnx,*.sln,*.csproj -File |
-              Where-Object { $_.FullName -notmatch "\\Template\\" }
-
-          foreach ($datoteka in $datoteke) {
-              $vsebina = Get-Content $datoteka.FullName -Raw
-              $guidi = [System.Text.RegularExpressions.Regex]::Matches(
-                  $vsebina, '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
-              ) | ForEach-Object { $_.Value } | Select-Object -Unique
-
-              foreach ($guid in $guidi) {
-                  $novGuid = [guid]::NewGuid().ToString().ToUpper()
-                  $vsebina = $vsebina -replace [regex]::Escape($guid), $novGuid
-              }
-
-              Set-Content -Path $datoteka.FullName -Value $vsebina -NoNewline
-              Write-Host "Posodobljeno: $($datoteka.FullName)"
-          }
-
           # 1. ZAČETEK: Aktivacija skenerja
           Write-Host "=========================================="
           Write-Host "Zaganjam SonarCloud analizo"
@@ -104,5 +118,6 @@ jobs:
                   }
               }
           }
+
           # 3. KONEC: Pošiljanje podatkov na SonarCloud
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
