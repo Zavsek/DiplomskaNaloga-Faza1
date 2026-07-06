@@ -32,7 +32,9 @@ jobs:
       - name: Install Sonar scanner
         shell: powershell
         run: |
-          dotnet tool update dotnet-sonarscanner --tool-path $env:RUNNER_TEMP\scanner
+          $scannerDir = "$env:RUNNER_TEMP\scanner"
+          New-Item -ItemType Directory -Force -Path $scannerDir | Out-Null
+          dotnet tool update dotnet-sonarscanner --tool-path $scannerDir
 
       - name: Begin Sonar
         shell: powershell
@@ -43,7 +45,7 @@ jobs:
             /k:"Zavsek_DiplomskaNaloga-Faza1" `
             /o:"zavsek" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-            
+
       - name: Build all experiments
         shell: powershell
         run: |
@@ -67,5 +69,7 @@ jobs:
       - name: End Sonar
         shell: powershell
         run: |
-          $env:RUNNER_TEMP\scanner\dotnet-sonarscanner end `
+          $scanner = "$env:RUNNER_TEMP\scanner\dotnet-sonarscanner"
+
+          & $scanner end `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
