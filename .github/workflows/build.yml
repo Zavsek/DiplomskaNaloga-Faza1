@@ -51,10 +51,23 @@ jobs:
           # 1. ZAČETEK: Aktivacija skenerja
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"Zavsek_DiplomskaNaloga-Faza1" /o:"zavsek" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
           
-          # 2. SREDINA: Avtomatsko iskanje in gradnja vseh 9 .slnx projektov
-          Get-ChildItem -Recurse -Filter *.slnx | ForEach-Object {
-              Write-Host "--> Gradim projekt: $($_.Name) v mapi $($_.DirectoryName)"
-              dotnet build $_.FullName
+          # 2. SREDINA: Eksplicitno ciljanje tvojih map (mapo /template popolnoma ignoriramo)
+          $glavneMape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
+          
+          foreach ($mapa in $glavneMape) {
+              if (Test-Path $mapa) {
+                  Write-Host "=========================================="
+                  Write-Host "Vstopam v mapo in iščem poskuse: $mapa"
+                  Write-Host "=========================================="
+                  
+                  # Poišči vse .slnx datoteke znotraj te specifične mape (Poskus1, Poskus2, Poskus3)
+                  Get-ChildItem -Path $mapa -Recurse -Filter *.slnx | ForEach-Object {
+                      Write-Host "--> ZAGON GRADNJE: $($_.Name) ($($_.FullName))"
+                      dotnet build $_.FullName
+                  }
+              } else {
+                  Write-Host "!!! OPOZORILO: Mapa '$mapa' ne obstaja v korenu repozitorija. Preveri črkovanje/velike tiskane črke !!!"
+              }
           }
           
           # 3. KONEC: Zaključek analize in pošiljanje na SonarCloud
