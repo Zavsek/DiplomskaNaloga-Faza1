@@ -1,4 +1,5 @@
 name: SonarQube
+
 on:
   push:
     branches:
@@ -10,65 +11,54 @@ jobs:
   build:
     name: Build and analyze
     runs-on: windows-latest
+
     steps:
-      - name: Set up JDK 17
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'zulu'
+          distribution: zulu
 
-      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          fetch-depth: 0 
+          dotnet-version: 10.0.x
 
-      - name: Cache SonarQube Cloud packages
+      - name: Cache Sonar scanner
+        id: cache-sonar
         uses: actions/cache@v4
         with:
-          path: ~\sonar\cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+          path: ${{ runner.temp }}\sonar-scanner
+          key: sonar-scanner-${{ runner.os }}
 
-      - name: Cache SonarQube Cloud scanner
-        id: cache-sonar-scanner
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}\scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
-
-      - name: Install SonarQube Cloud scanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+      - name: Install Sonar scanner
+        if: steps.cache-sonar.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+          New-Item -ItemType Directory -Path "${{ runner.temp }}\sonar-scanner" -Force
+          dotnet tool update dotnet-sonarscanner --tool-path "${{ runner.temp }}\sonar-scanner"
 
-      - name: Build and analyze
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Begin Sonar analysis
         shell: powershell
         run: |
-          # 1. ZAČETEK: Aktivacija skenerja
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"Zavsek_DiplomskaNaloga-Faza1" /o:"zavsek" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-          
-          # 2. SREDINA: Eksplicitno ciljanje tvojih map (mapo /template popolnoma ignoriramo)
-          $glavneMape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
-          
-          foreach ($mapa in $glavneMape) {
-              if (Test-Path $mapa) {
-                  Write-Host "=========================================="
-                  Write-Host "Vstopam v mapo in iščem poskuse: $mapa"
-                  Write-Host "=========================================="
-                  
-                  # Poišči vse .slnx datoteke znotraj te specifične mape (Poskus1, Poskus2, Poskus3)
-                  Get-ChildItem -Path $mapa -Recurse -Filter *.slnx | ForEach-Object {
-                      Write-Host "--> ZAGON GRADNJE: $($_.Name) ($($_.FullName))"
-                      dotnet build $_.FullName
-                  }
-              } else {
-                  Write-Host "!!! OPOZORILO: Mapa '$mapa' ne obstaja v korenu repozitorija. Preveri črkovanje/velike tiskane črke !!!"
-              }
-          }
-          
-          # 3. KONEC: Zaključek analize in pošiljanje na SonarCloud
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}\sonar-scanner\dotnet-sonarscanner begin `
+            /k:"Zavsek_DiplomskaNaloga-Faza1" `
+            /o:"zavsek" `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Build solution
+        shell: powershell
+        run: |
+          # BUILD CELEGA REPOJA NAENKRAT
+          dotnet build --configuration Release
+
+      - name: End Sonar analysis
+        shell: powershell
+        run: |
+          ${{ runner.temp }}\sonar-scanner\dotnet-sonarscanner end `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"

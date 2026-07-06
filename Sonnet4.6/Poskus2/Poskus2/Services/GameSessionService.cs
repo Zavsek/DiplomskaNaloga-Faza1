@@ -83,12 +83,12 @@ namespace Poskus2.Services
                 var delay = endsAt - DateTime.UtcNow;
                 if (delay <= TimeSpan.Zero)
                 {
-                    _ = FinishSessionAsync(gameSessionId);
+                    TriggerFinishSession(gameSessionId);
                 }
                 else
                 {
                     state.ExpiryTimer = new Timer(
-                        _ => _ = FinishSessionAsync(gameSessionId),
+                        _ => TriggerFinishSession(gameSessionId),
                         null,
                         (long)delay.TotalMilliseconds,
                         Timeout.Infinite
@@ -97,6 +97,11 @@ namespace Poskus2.Services
 
                 return state;
             });
+        }
+
+        private void TriggerFinishSession(int gameSessionId)
+        {
+            _ = FinishSessionAsync(gameSessionId);
         }
 
         private async Task FinishSessionAsync(int gameSessionId)
