@@ -46,25 +46,18 @@ jobs:
             /o:"zavsek" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Build all experiments
+      - name: Build
         shell: powershell
         run: |
           $mape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
 
           foreach ($m in $mape) {
 
-            Write-Host "====================================="
-            Write-Host "Buildam mapo: $m"
-            Write-Host "====================================="
+            Write-Host "==== BUILD $m ===="
 
-            Get-ChildItem -Path $m -Recurse -Filter *.slnx |
-              Where-Object { $_.FullName -notmatch "\\Template\\" } |
-              ForEach-Object {
-
-                Write-Host "Build: $($_.FullName)"
-                dotnet build $_.FullName --configuration Release
-              }
-          }
+            # BUILD CELE MAPE NAENKRAT (ne .slnx loop!)
+            dotnet build $m --configuration Release
+          } 
 
       - name: End Sonar
         shell: powershell
