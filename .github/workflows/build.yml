@@ -1,58 +1,109 @@
-name: SonarQube analiza po poskusih
+name: SonarCloud analiza
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        folder:
-          - Codex5.3/Poskus1
-          - Codex5.3/Poskus2
-          - Codex5.3/Poskus3
-          - Gemini3.1/Poskus1
-          - Gemini3.1/Poskus2
-          - Gemini3.1/Poskus3
-          - Sonnet4.6/Poskus1
-          - Sonnet4.6/Poskus2
-          - Sonnet4.6/Poskus3
+  build:
+    name: Build and analyze
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Setup Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
-      - name: Install sonarscanner
-        run: dotnet tool install --global dotnet-sonarscanner
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-      - name: Nastavi project key
-        id: vars
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
         run: |
-          KEY=$(echo "${{ matrix.folder }}" | tr '/' '-' | tr '.' '-')
-          echo "key=llm-compare-$KEY" >> $GITHUB_OUTPUT
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
-      - name: Sonar begin
-        working-directory: ${{ matrix.folder }}
-        run: >
-          dotnet sonarscanner begin
-          /k:"${{ steps.vars.outputs.key }}"
-          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          # 0. Regeneracija GUID-jev, da se izognemo "Duplicate ProjectGuid"
+          Write-Host "=========================================="
+          Write-Host "Regeneriram GUID-e v kopiranih projektih..."
+          Write-Host "=========================================="
 
-      - name: Build
-        working-directory: ${{ matrix.folder }}
-        run: dotnet build *.slnx
+          $datoteke = Get-ChildItem -Path . -Recurse -Include *.slnx,*.sln,*.csproj -File |
+              Where-Object { $_.FullName -notmatch "\\Template\\" }
 
-      - name: Sonar end
-        working-directory: ${{ matrix.folder }}
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          foreach ($datoteka in $datoteke) {
+              $vsebina = Get-Content $datoteka.FullName -Raw
+              $guidi = [System.Text.RegularExpressions.Regex]::Matches(
+                  $vsebina, '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
+              ) | ForEach-Object { $_.Value } | Select-Object -Unique
+
+              foreach ($guid in $guidi) {
+                  $novGuid = [guid]::NewGuid().ToString().ToUpper()
+                  $vsebina = $vsebina -replace [regex]::Escape($guid), $novGuid
+              }
+
+              Set-Content -Path $datoteka.FullName -Value $vsebina -NoNewline
+              Write-Host "Posodobljeno: $($datoteka.FullName)"
+          }
+
+          # 1. ZAČETEK: Aktivacija skenerja
+          Write-Host "=========================================="
+          Write-Host "Zaganjam SonarCloud analizo"
+          Write-Host "=========================================="
+
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"Zavsek_DiplomskaNaloga-Faza1" /o:"zavsek" /d:sonar.token="$env:SONAR_TOKEN"
+
+          $glavneMape = @("Codex5.3", "Gemini3.1", "Sonnet4.6")
+
+          # 2. GRADNJA: Sprehod skozi vse .slnx datoteke
+          foreach ($mapa in $glavneMape) {
+              if (Test-Path $mapa) {
+                  Write-Host "=========================================="
+                  Write-Host "Vstopam v mapo: $mapa"
+                  Write-Host "=========================================="
+
+                  Get-ChildItem -Path $mapa -Recurse -Filter *.slnx | ForEach-Object {
+                      Write-Host "--> ZAGON GRADNJE: $($_.Name)"
+                      try {
+                          dotnet build $_.FullName -v:q --no-incremental
+                      } catch {
+                          Write-Host "[OPOZORILO] Gradnja za $($_.Name) je spodletela, nadaljujemo z ostalimi..."
+                      }
+                  }
+              }
+          }
+
+          # 3. KONEC: Pošiljanje podatkov na SonarCloud
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
