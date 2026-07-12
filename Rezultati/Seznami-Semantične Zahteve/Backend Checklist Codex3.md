@@ -1,0 +1,29 @@
+- [x] Izključno Controllerji
+- [x] Brez OAuth
+- [x] Brez SignalR
+- [x] točna imena dto-ja za reistraicjo
+- [x] samo polnoletni uporabniki
+- [x] uporaba HMAC SHA-256
+- [x] pravilna vsebina validate endpointa
+- [x] samo en veljaven JWT
+- [x] ni poling
+- [x] samo pošijanje quiz idja
+- [x] pošiljanje question send dto
+- [x] ne pošilja odgovora
+- [x] Samo A,B,C,D vprašanja
+- [x] avtomatski zaključek kviza
+- [ ] zaključek v realnem čašu
+- [x] prepovedano reševanje
+- [ ] obveščanje v realnem času
+- [x] pošiljanje sporočila
+- [x] pošisljanje statistik
+- [x] pošiljanje obeh
+- [x] pošiljanje eno od teh
+- [x] izračunano v zaledju
+- [x] correctProcentage(delež pravilnih odgovorov)
+- [x] avgAnwserTime(povprečen čas za odgovor)
+- [x] mostCommonAnwser(A,B,C ali D)
+- [x] longestStreak(število največ pravilno odgovorjenih zaporednih odgovorov)
+- [x] avgWastedTimeOnWrongAnswers(Povprečen čas, ki ga je uporabnik porabil za vprašanja, 
+- [ ] statistika upošteva samo zadnji poizkus
+- [x] brez spreminjanja tabel

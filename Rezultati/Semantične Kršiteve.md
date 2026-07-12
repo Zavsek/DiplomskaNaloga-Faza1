@@ -1,0 +1,13 @@
+### Skupno kršitev
+- ##### ChatGPT Codex 5.3
+    - Prvi poskus: **5** kršitve
+    - Drugi poskus: **5** kršitve
+    -  Tretji poskus: **3** kršitve
+- ##### Gemini Pro 3.1
+    - Prvi poskus: **4** Kršitve
+    - Drugi poskus: **4** Kršitve
+    - Tretji poskus:  **4** Kršitve
+- ##### Claude Sonnet4.6
+    - Prvi poskus: **2** Kršitev
+    - Drugi poskus: **2** Kršitev
+    - Tretji poskus: **2** Kršitve

@@ -49,7 +49,7 @@ namespace Poskus2.Controllers
             {
                 Email = dto.email,
                 PasswordHash = HashPassword(dto.password),
-                DateOfBirth = dto.dateOfBirth.ToUniversalTime(),
+                DateOfBirth = DateTime.SpecifyKind(dto.dateOfBirth.Date, DateTimeKind.Utc),
                 FullName = dto.fullName,
                 Country = dto.country
             };

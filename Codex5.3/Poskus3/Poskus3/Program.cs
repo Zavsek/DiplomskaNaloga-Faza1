@@ -123,4 +123,4 @@ app.Map("/chat", async context =>
 
 app.MapControllers();
 
-app.Run("http://localhost:5000");
+app.Run();

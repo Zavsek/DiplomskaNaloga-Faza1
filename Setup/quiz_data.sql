@@ -3,7 +3,8 @@ VALUES
 (1, 'Splošni Pop Kviz', '00:05:00'),
 (2, 'Napredni Geografski Izziv', '00:10:00'),
 (3, 'Filmska in Pop Kultura', '00:07:00'),
-(4, 'Zgodovina in Mitologija', '00:08:00')
+(4, 'Zgodovina in Mitologija', '00:08:00'),
+(5, 'Hitrostni Izziv (5 sekund)', '00:00:05')
 ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, duration = EXCLUDED.duration;
 
 INSERT INTO questions (id, "questionText", answer, "quizId", "orderIndex") 
@@ -32,8 +33,10 @@ VALUES
 (15, 'Kdo je bil vrhovni bog v grški mitologiji?', 'A', 4, 2),
 (16, 'Katera civilizacija je zgradila Machu Picchu?', 'B', 4, 3),
 (17, 'Kdo je bil prvi predsednik Združenih držav Amerike?', 'D', 4, 4),
-(18, 'V katerem stoletju se je začela industrijska revolucija?', 'B', 4, 5)
-
+(18, 'V katerem stoletju se je začela industrijska revolucija?', 'B', 4, 5),
+-- Kviz 5
+(19, 'Hitro! Koliko je 2 + 2?', 'A', 5, 1),
+(20, 'Katera je prva črka abecede?', 'B', 5, 2)
 ON CONFLICT (id) DO UPDATE SET 
     "questionText" = EXCLUDED."questionText", 
     answer = EXCLUDED.answer, 

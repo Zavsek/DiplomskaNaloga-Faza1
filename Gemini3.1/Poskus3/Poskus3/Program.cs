@@ -111,4 +111,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://localhost:5000");
+app.Run();

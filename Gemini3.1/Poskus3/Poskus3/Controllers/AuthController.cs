@@ -51,7 +51,7 @@ namespace Poskus3.Controllers
             {
                 email = dto.email,
                 passwordHash = PasswordHelper.HashPassword(dto.password),
-                dateOfBirth = dto.dateOfBirth.Date,
+                dateOfBirth = DateTime.SpecifyKind(dto.dateOfBirth.Date, DateTimeKind.Utc),
                 fullName = dto.fullName,
                 country = dto.country
             };

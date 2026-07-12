@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Poskus2.Entities;
 
 namespace Poskus2.Data
@@ -16,6 +17,7 @@ namespace Poskus2.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            ConfigureUtcDateTimes(modelBuilder);
 
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.quiz)
@@ -30,5 +32,36 @@ namespace Poskus2.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
         }
+
+        private static void ConfigureUtcDateTimes(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(
+                            new ValueConverter<DateTime, DateTime>(
+                                v => ToUtc(v),
+                                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(
+                            new ValueConverter<DateTime?, DateTime?>(
+                                v => v.HasValue ? ToUtc(v.Value) : v,
+                                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v));
+                    }
+                }
+            }
+        }
+
+        private static DateTime ToUtc(DateTime value) => value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
     }
 }
