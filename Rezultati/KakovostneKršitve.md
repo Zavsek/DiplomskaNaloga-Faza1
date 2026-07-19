@@ -4,7 +4,7 @@ rezultati so zapisani po poglavjih. vsako poglavje vsebuje podatke za vse tri mo
 >  `_ime modela_ -  _število kršitev skozi vse tri poskuse_ - (_Število kršitev poskus1;Število kršitev poskus2;Število kršitev poskus3_)
 
 ##### Upravljanje s napakami
--  GPT Codex5.3 - **50** - (**17**;**17**;**16**;) 
+-  GPT Codex5.3 - **51** - (**18**;**17**;**16**;) 
 - Gemini Pro 3.1 - **56** - (**20**;**20**;**16**;) 
 - Claude Sonnet 4.6 - **65** - (**17**;**26**;**22**;) 
 
@@ -26,9 +26,9 @@ rezultati so zapisani po poglavjih. vsako poglavje vsebuje podatke za vse tri mo
 
 ##### Redundantni klic PB
 ###### !!! niso končni rezultati
--  GPT Codex5.3 - **12** - (**6**;**2**;**4**;) 
-- Gemini Pro 3.1 - **6** - (**2**;**2**;**2**;) 
-- Claude Sonnet 4.6 - **9** - (**1**;**7**;**2**;) 
+-  GPT Codex5.3 - **12** - (**4**;**4**;**4**;) 
+- Gemini Pro 3.1 - **9** - (**4**;**3**;**2**;) 
+- Claude Sonnet 4.6 - **11** - (**3**;**7**;**2**;) 
 
 
 ##### Predolge funkcije
