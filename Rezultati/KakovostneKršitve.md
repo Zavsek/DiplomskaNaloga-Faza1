@@ -26,9 +26,9 @@ rezultati so zapisani po poglavjih. vsako poglavje vsebuje podatke za vse tri mo
 
 ##### Redundantni klic PB
 ###### !!! niso končni rezultati
--  GPT Codex5.3 - **12** - (**4**;**4**;**4**;) 
-- Gemini Pro 3.1 - **9** - (**4**;**3**;**2**;) 
-- Claude Sonnet 4.6 - **11** - (**3**;**7**;**2**;) 
+-  GPT Codex5.3 - **13** - (**4**;**5**;**4**;) 
+- Gemini Pro 3.1 - **10** - (**4**;**4**;**2**;) 
+- Claude Sonnet 4.6 - **12** - (**3**;**8**;**2**;) 
 
 
 ##### Predolge funkcije
